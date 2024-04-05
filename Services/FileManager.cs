@@ -173,7 +173,7 @@ public class FileManager
       }
       var rowCount = worksheet.Dimension.Rows;
       string? temp, test;
-      for(int row = 2; row < rowCount; row++)
+      for(int row = 2; row <= rowCount; row++)
       {
         var composicao = new Composicao();
 
