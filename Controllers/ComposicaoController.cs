@@ -86,6 +86,7 @@ namespace backend.Controllers
         public ActionResult PostComposicao(Composicao composicao)
         {
           if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
+          if(!DiasUteisExist(composicao.dia)) DiasUteisInsert(composicao.dia);
           if (database.composicao == null)
           {
               return Problem("Entity set 'Database.composicao'  is null.");
@@ -145,6 +146,8 @@ namespace backend.Controllers
               var composicoes = filemanager.Composicao();
               if (composicoes.Select(a => a.dia).Distinct().Count() > 1)
                 throw new InvalidOperationException("A composição enviada contém mais de uma data!\nA composição deve ser enviada um dia por vez.");
+              var data = composicoes.First().dia;
+              if(!DiasUteisExist(data)) DiasUteisInsert(data);
               if (composicoes.Where(c => c.validacao.Any()).Any()) return UnprocessableEntity(composicoes);
               database.AddRange(composicoes);
               database.SaveChanges();
@@ -163,6 +166,15 @@ namespace backend.Controllers
             {
               return Problem(erro.Message);
             }
+        }
+        private bool DiasUteisExist(DateOnly data)
+        {
+          return this.database.dias_uteis.Find(new DateOnly(year: data.Year, month: data.Month, day: 1)) != null;
+        }
+        private void DiasUteisInsert(DateOnly data)
+        {
+          this.database.dias_uteis.Add(new DiasUteis(new DateOnly(year: data.Year, month: data.Month, day: 1)));
+          this.database.SaveChanges();
         }
     }
 }

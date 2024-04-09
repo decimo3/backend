@@ -8,12 +8,14 @@ public class Feriado
   public String descricao { get; set; }
   public TipoFeriado tipo_feriado { get; set; }
   public Regional regional { get; set; }
+  public Int32 referencia { get; set; }
   public Feriado(DateOnly dia, String descricao, TipoFeriado tipo_feriado = 0, Regional regional = 0)
   {
     this.dia = dia;
     this.descricao = descricao;
     this.tipo_feriado = tipo_feriado;
     this.regional = regional;
+    this.referencia = (dia.Year * 100) + dia.Month;
   }
 }
 public enum TipoFeriado
