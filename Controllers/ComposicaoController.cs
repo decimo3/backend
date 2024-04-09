@@ -20,8 +20,12 @@ namespace backend.Controllers
         {
             this.database = database;
             this.alteracaoLog = alteracaoLog;
-            this.alteracaoLog.responsavel = ((Funcionario)httpContext.HttpContext!.Items["User"]!).matricula;
             this.alteracaoLog.tabela = this.ToString()!;
+            if(httpContext.HttpContext != null)
+            {
+              var funcionario = (Funcionario?)httpContext.HttpContext.Items["User"];
+              if(funcionario != null) this.alteracaoLog.responsavel = funcionario.matricula;
+            }
         }
         // GET: api/Composicao
         [HttpGet("{inicio}/{final}/{regional}/{atividade}")]
@@ -38,6 +42,7 @@ namespace backend.Controllers
         [HttpPut("{data}/{recurso}")]
         public ActionResult PutComposicao(DateOnly data, string recurso, Composicao composicao)
         {
+            if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
             if (!ComposicaoExists(data, recurso)) return NotFound();
             if (recurso != composicao.recurso)
             {
@@ -80,6 +85,8 @@ namespace backend.Controllers
         [ActionName("PostFormulario")]
         public ActionResult PostComposicao(Composicao composicao)
         {
+          if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
+          if(!DiasUteisExist(composicao.dia)) DiasUteisInsert(composicao.dia);
           if (database.composicao == null)
           {
               return Problem("Entity set 'Database.composicao'  is null.");
@@ -113,6 +120,7 @@ namespace backend.Controllers
         [HttpDelete("{data}/{recurso}")]
         public ActionResult DeleteComposicao(DateOnly data, string recurso)
         {
+            if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
             if (database.composicao == null) return NotFound();
             var composicao = database.composicao.Find(data, recurso);
             if (composicao == null) return NotFound();
@@ -130,6 +138,7 @@ namespace backend.Controllers
         [ActionName("PostArquivo")]
         public ActionResult PostComposicao(IFormFile file)
         {
+            if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
             if (file.Length == 0) return BadRequest("O arquivo enviado está vazio!");
             var filemanager = new FileManager(database, file);
             try
@@ -137,6 +146,8 @@ namespace backend.Controllers
               var composicoes = filemanager.Composicao();
               if (composicoes.Select(a => a.dia).Distinct().Count() > 1)
                 throw new InvalidOperationException("A composição enviada contém mais de uma data!\nA composição deve ser enviada um dia por vez.");
+              var data = composicoes.First().dia;
+              if(!DiasUteisExist(data)) DiasUteisInsert(data);
               if (composicoes.Where(c => c.validacao.Any()).Any()) return UnprocessableEntity(composicoes);
               database.AddRange(composicoes);
               database.SaveChanges();
@@ -155,6 +166,15 @@ namespace backend.Controllers
             {
               return Problem(erro.Message);
             }
+        }
+        private bool DiasUteisExist(DateOnly data)
+        {
+          return this.database.dias_uteis.Find(new DateOnly(year: data.Year, month: data.Month, day: 1)) != null;
+        }
+        private void DiasUteisInsert(DateOnly data)
+        {
+          this.database.dias_uteis.Add(new DiasUteis(new DateOnly(year: data.Year, month: data.Month, day: 1)));
+          this.database.SaveChanges();
         }
     }
 }

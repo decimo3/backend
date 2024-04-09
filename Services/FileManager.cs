@@ -47,7 +47,7 @@ public class FileManager
     }
     writer.Flush();
     memory.Position = 0;
-    using (var fileStream = new FileStream($"./AppData/relatorios_ofs/{file.FileName}", FileMode.Create, FileAccess.Write))
+    using (var fileStream = new FileStream(@$"D:/RELATORIOS/{file.FileName}", FileMode.Create, FileAccess.Write))
     {
       memory.CopyTo(fileStream);
     }
@@ -176,7 +176,7 @@ public class FileManager
       }
       var cabecalho = Cabecalho(primeira_linha);
       var rowCount = worksheet.Dimension.Rows;
-      for(int row = 2; row < rowCount; row++)
+      for(int row = 2; row <= rowCount; row++)
       {
         var composicao = new Composicao();
 
@@ -390,7 +390,7 @@ public class FileManager
         if(arg.Length < 5) return "O texto está incompleto ou vazio!";
       break;
       case ExpectedType.Enum:
-        String[] enums = {"BAIXADA", "CAMPO GRANDE", "JACAREPAGUA", "CORTE", "RELIGA", "RELIGA POSTO", "RELIGA CAMINHÃO", "EMERGÊNCIA", "ESTOQUE DE CORTADOS", "CORTE EXTRA"};
+        String[] enums = {"BAIXADA", "CAMPO GRANDE", "JACAREPAGUA", "LESTE", "CORTE", "RELIGA", "RELIGA POSTO", "RELIGA CAMINHÃO", "EMERGÊNCIA", "ESTOQUE DE CORTADOS", "CORTE EXTRA"};
         if(!enums.Contains(arg)) return "O texto encontrado não corresponde com o padrão!";
       break;
       case ExpectedType.Placa:

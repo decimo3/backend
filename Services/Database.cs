@@ -7,13 +7,8 @@ public class Database : DbContext
   {
     if(System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
     {
-      optionsBuilder.UseSqlite("Data Source=AppData/database.db")
-        .LogTo(Console.WriteLine, LogLevel.Information)
-        .EnableSensitiveDataLogging()
-        .EnableDetailedErrors();
+      dotenv.net.DotEnv.Fluent().WithEnvFiles(".env").Load();
     }
-    else
-    {
       var dbhost = System.Environment.GetEnvironmentVariable("PGHOST");
       if(dbhost is null) throw new InvalidOperationException("Environment variable PGHOST is not set!");
       var dbport = System.Environment.GetEnvironmentVariable("PGPORT");
@@ -33,7 +28,6 @@ public class Database : DbContext
         Database = dbbase
       };
       optionsBuilder.UseNpgsql(stringconnection.ConnectionString);
-    }
   }
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -50,4 +44,5 @@ public class Database : DbContext
   public DbSet<Feriado> feriado { get; set; }
   public DbSet<RelatorioEstatisticas> relatorioEstatisticas { get; set; }
   public DbSet<Alteracao> alteracao { get; set; }
+  public DbSet<DiasUteis> dias_uteis { get; set; }
 }
