@@ -50,4 +50,5 @@ public class Database : DbContext
   public DbSet<Feriado> feriado { get; set; }
   public DbSet<RelatorioEstatisticas> relatorioEstatisticas { get; set; }
   public DbSet<Alteracao> alteracao { get; set; }
+  public DbSet<DiasUteis> dias_uteis { get; set; }
 }
