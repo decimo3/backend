@@ -1,0 +1,17 @@
+[
+  {
+    "referencia": "2024-04-01",
+    "dias_uteis": 22,
+    "identificador": 202404 
+  },
+  {
+    "referencia": "2024-03-01",
+    "dias_uteis": 21,
+    "identificador": 202403
+  },
+  {
+    "referencia": "2024-05-01",
+    "dias_uteis": 23,
+    "identificador": 202405
+  }
+]
