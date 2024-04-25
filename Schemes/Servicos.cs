@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 namespace backend.Models;
 [Index(nameof(identificador), IsUnique = false)]
-public class Servico
+public partial class Servico
 {
   public String filename { get; set; }
   public String recurso { get; set; }
