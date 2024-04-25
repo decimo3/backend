@@ -70,6 +70,7 @@ public enum SetorAtividade
 {
   NENHUM = 0,
   CORE = 1,
-  LIDE = 2,
-  REN = 3
+  REN = 2,
+  ANEXO = 3,
+  LIDE = 4
 }
