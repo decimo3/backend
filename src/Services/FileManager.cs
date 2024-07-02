@@ -1,21 +1,16 @@
-using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using backend.Models;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.Extensions.DependencyModel.Resolution;
 using OfficeOpenXml;
 namespace backend.Services;
 public class FileManager
 {
-  private readonly IFormFile file;
+  private readonly String filename;
   private readonly Database database;
   private readonly Stream stream;
-  public FileManager(Database database, IFormFile file)
+  public FileManager(Database database, Stream stream, String filename)
   {
     this.database = database;
-    this.file = file;
-    this.stream = this.file.OpenReadStream();
+    this.stream = stream;
+    this.filename = filename;
   }
   private StreamReader Sanitizacao()
   {
@@ -47,7 +42,7 @@ public class FileManager
     }
     writer.Flush();
     memory.Position = 0;
-    using (var fileStream = new FileStream(@$"D:/RELATORIOS/{file.FileName}", FileMode.Create, FileAccess.Write))
+    using (var fileStream = new FileStream(@$"D:/RELATORIOS/{filename}", FileMode.Create, FileAccess.Write))
     {
       memory.CopyTo(fileStream);
     }
@@ -56,7 +51,7 @@ public class FileManager
   }
   public List<Servico> Relatorio()
   {
-    string ext = Path.GetExtension(file.FileName);
+    string ext = Path.GetExtension(filename);
     if (ext != ".csv") throw new InvalidOperationException("Tipo de arquivo inválido!");
     using var streamsanitizado = Sanitizacao();
     var servicos = new List<Servico>();
@@ -68,96 +63,103 @@ public class FileManager
         line = line.Replace("\"", "");
         var values = line.Split(',');
         if(values[0] == "Recurso") continue;
-        TipoStatus status;
-        switch(values[3]) {
-          case "não concluído": status = TipoStatus.rejeitado; break;
-          case "concluído": status = TipoStatus.concluido; break;
-          case "em rota": status = TipoStatus.deslocando; break;
-          default: status = Enum.Parse<TipoStatus>(values[3]); break;
-        }
-        TipoInstalacao? fases;
-        switch(values[64]) {
-          case "Monofásico": fases = TipoInstalacao.Monofasico; break;
-          case "Bifásico": fases = TipoInstalacao.Bifasico; break;
-          case "Trifásico": fases = TipoInstalacao.Trifasico; break;
-          default: fases = null; break;
-        }
-        if(values[59].Split(' ')[0] == "20.5") status = TipoStatus.concluido;
-        var codigos = (values[44] != String.Empty) ? values[44] : values[59].Split(' ')[0];
-        DateTime? vencimento = null;
-        var re = new Regex(@"(?<dia>\d{2})/(?<mes>\d{2})/(?<ano>\d{2}) (?<hor>\d{2}):(?<min>\d{2})");
-        if(re.IsMatch(values[16])) {
-          var ma = re.Match(values[16]);
-          var ano = Int32.Parse(ma.Groups["ano"].Value) + 2_000;
-          var mes = Int32.Parse(ma.Groups["mes"].Value);
-          var dia = Int32.Parse(ma.Groups["dia"].Value);
-          var hor = Int32.Parse(ma.Groups["hor"].Value);
-          var min = Int32.Parse(ma.Groups["min"].Value);
-          vencimento = new DateTime(year: ano, month: mes, day: dia, hour: hor, minute: min, second: 0, kind: DateTimeKind.Utc);
-        }
-        var abreviado = abreviacao(values[0]);
-        var id = (abreviado == String.Empty) ? String.Empty : String.Concat(DateTime.Parse(values[1]).ToString("yyyyMMdd"), abreviado);
-        servicos.Add(new Servico {
-          filename = file.FileName,
-          recurso = values[0],
-          dia = DateOnly.Parse(values[1]),
-          serial = Int32.Parse(values[2]),
-          status = status, // values[3] foi préviamente verificado e assinalado a variavel
-          nome_do_cliente = values[4],
-          endereco_destino = values[5],
-          cidade_destino = values[6],
-          // values[7] = "Estado" é desnecessário
-          codigo_postal = values[8],
-          // values[9] = telefone é sempre vazio
-          // values[10] = celular é sempre vazio
-          // values[11] = email é sempre vazio
-          hora_inicio = TimeOnly.TryParse(values[12], out TimeOnly inicio) ? inicio : null,
-          hora_final = TimeOnly.TryParse(values[13], out TimeOnly final) ? final : null,
-          // values[14] = "inicio-fim" é desnecessário
-          // values[15] = "inicio SLA" é sempre o mesmo
-          vencimento = vencimento, // values[16] foi préviamente verificado e assinalado a variavel
-          duracao_feito = TimeSpan.TryParse(values[17], out TimeSpan duracao) ? duracao : null,
-          desloca_feito = TimeSpan.TryParse(values[18], out TimeSpan desloca) ? desloca : null,
-          // values[19] = "tipo atividade" é sempre o mesmo
-          tipo_atividade = values[20],
-          servico = Int32.TryParse(values[21], out Int32 nota) ? nota : null,
-          area_trabalho = values[24],
-          // values[22..43] "multiplos" é desnecessário
-          codigos = codigos, // values[44, 59] foi préviamente verificado e assinalado a variavel
-          id_viatura = values[45],
-          id_motorista = Int32.TryParse(values[46], out Int32 id_mot) ? id_mot : null,
-          id_ajudante = Int32.TryParse(values[47], out Int32 id_aux) ? id_aux : null,
-          id_tecnico = Int32.TryParse(values[48], out Int32 id_tec) ? id_tec : null,
-          observacao = values[49],
-          // values[50] "descrição para dano" é desnecessária
-          bairro_destino = values[51],
-          // values[52..54] "multiplos" é desnecessário
-          instalacao = Int32.TryParse(values[55], out Int32 inst) ? inst : null,
-          complemento_destino = values[56],
-          referencia_destino = values[57],
-          // values[58] "intervalo de tempo" é desnecessário
-          // values[59] "motivo rejeicao" já foi combinado com values[44] para gerar a variável "codigos"
-          tipo_servico = values[60],
-          // values[61] = "reserva de atividade" é desnecessário
-          debitos_cliente = Double.TryParse(values[62], out Double deb) ? deb : null,
-          // values[63..68] = "multiplos" é desnecessário
-          tipo_instalacao = fases,
-          desloca_estima = TimeSpan.TryParse("00:" + values[69], out TimeSpan desloca_est) ? desloca_est : null,
-          duracao_estima = TimeSpan.TryParse("00:" + values[70], out TimeSpan duracao_est) ? duracao_est : null,
-          // values[71..75] = "multiplos" é desnecessário
-          identificador = id,
-          abreviacao = abreviado
-        });
+        var servico = new Servico();
+        servico.filename = filename;
+        servico.recurso = values[0];
+        servico.dia = Conversor.GetDateOnly(values[1]);
+        servico.serial = Conversor.GetNumberMiddle(values[2]);
+        servico.id_servico_situacao = this.database.servico_situacao.Where(s => s.servico_situacao == values[3]).Single().id_servico_situacao;
+        servico.nome_do_cliente = values[4];
+        servico.endereco_destino = values[5];
+        servico.cidade_destino = values[6];
+        servico.estado_destino = values[7];
+        servico.codigo_postal = Conversor.GetNumberMiddle(values[8]);
+        servico.telefone_cliente = Conversor.GetNumberLong(values[9]);
+        servico.celular_cliente = Conversor.GetNumberLong(values[10]);
+        servico.email_cliente = values[11];
+        servico.hora_inicio = Conversor.GetTimeOnly(values[12]);
+        servico.hora_final = Conversor.GetTimeOnly(values[13]);
+        servico.inicio_final = values[14];
+        servico.criado_em = Conversor.GetDateTime(values[15]);
+        servico.vencimento = Conversor.GetDateTime(values[16]);
+        servico.duracao_feito = Conversor.GetTimeSpan(values[17]);
+        servico.desloca_feito = Conversor.GetTimeSpan(values[18]);
+        servico.tipo_atividade = values[19];
+        servico.tipo_atividade_1 = values[20];
+        servico.ordem_de_servico = Conversor.GetNumberLong(values[21]);
+        servico.numero_da_conta = values[22];
+        servico.habilidade_de_trabalho = values[23];
+        servico.area_trabalho = this.database.servico_localidade.Where(s => s.servico_localidade == values[24]).Single().id_servico_localidade;
+        servico.primeira_operacao_manual = values[25];
+        servico.primeira_operacao_manual_login = values[26];
+        servico.primeira_operacao_manual_nome = values[27];
+        servico.horario_em_rota = values[28];
+        servico.data_inicio_de_turno = Conversor.GetDateTime(values[29]);
+        servico.data_do_ro = values[30];
+        servico.roteado_automaticamente_ate_o_momento = Conversor.GetDateOnly(values[31]);
+        servico.roteado_automaticamente_ate_o_recurso = Conversor.GetNumberShort(values[32]);
+        servico.roteado_automaticamente_ate_o_recurso_nome = values[33];
+        servico.id_do_recurso = Conversor.GetNumberShort(values[34]);
+        servico.primeira_operacao_manual_executada_por_usuario = Conversor.GetNumberShort(values[35]);
+        servico.usuario_conclusao = values[36];
+        servico.coordenada_x = Conversor.GetNumberDouble(values[37]);
+        servico.coordenada_y = Conversor.GetNumberDouble(values[38]);
+        servico.exatidao_da_coordenada = values[39];
+        servico.status_da_coordenada = values[40];
+        servico.codigos_fechamento = values[41];
+        servico.lg_ctrl_tipo_fechamento_ok = values[42];
+        servico.cod_fechamento_preenchido = values[43];
+        servico.cods_de_fechamento = values[44];
+        servico.label_do_veiculo = values[45];
+        servico.id_matricula_lider = Conversor.GetNumberMiddle(values[46]);
+        servico.id_matricula_auxiliares = Conversor.GetNumberMiddle(values[47]);
+        servico.id_matricula_guarda = Conversor.GetNumberMiddle(values[48]);
+        servico.observacao = values[49];
+        servico.descricao_breve_do_conteudo_da_nota = values[50];
+        servico.sub_bairro = values[51];
+        servico.lg_flag_preech_fechamento = values[52];
+        servico.codigos_de_fechamento_da_atividade_pai_v03 = values[53];
+        servico.lg_ctrl_reprov_flag = values[54];
+        servico.numero_da_instalacao = Conversor.GetNumberLong(values[55]);
+        servico.edificio = values[56];
+        servico.complemento = values[57];
+        servico.intervalo_de_tempo = values[58];
+        servico.motivo_de_rejeicao = values[59].Split(' ').First();
+        servico.tipo_de_nota_de_servico = values[60];
+        servico.tempo_de_reserva_da_atividade = Conversor.GetDateTime(values[61]);
+        servico.debitos_cliente = Conversor.GetNumberDouble(values[62]);
+        servico.balde_origem = values[63];
+        servico.tipo_de_ligacao = values[64];
+        servico.cliente_assinou_toi = values[65];
+        servico.recusou_a_assinar_toi = values[66];
+        servico.recusou_receber_toi = values[67];
+        servico.autorizou_levantamento_de_carga = values[68];
+        servico.desloca_estimado = Conversor.GetTimeSpan(values[69]);
+        servico.duracao_estimado = Conversor.GetTimeSpan(values[70]);
+        servico.abrangencia = values[71];
+        servico.motivo_indisponibilidade = values[72];
+        servico.chi = Conversor.GetNumberShort(values[73]);
+        servico.tempo_interrompido = Conversor.GetNumberShort(values[74]);
+        servico.valor_compensacao_financeira = Conversor.GetNumberShort(values[75]);
+        servico.codigos_concaternados = Conversor.Concatenar(servico.cods_de_fechamento, servico.motivo_de_rejeicao);
+        servico.abreviacao = Conversor.Abreviacao(servico.recurso);
+        servico.identificador = Conversor.Identificador(servico.dia, servico.abreviacao);
+        servico.timestamp = Conversor.GetDateTime(servico.dia, servico.hora_final);
+        var atividade = this.database.servico_tipo.Find(servico.tipo_de_nota_de_servico);
+        if(atividade != null) servico.id_atividade = this.database.atividade.Where(a => a.atividade == atividade.servico_tipo).Single().id_atividade;
+        var processo = this.database.processo_atividade.Find(servico.id_atividade);
+        if(processo != null) servico.id_processo = processo.id_processo;
+        if(servico.codigos_concaternados == "20.5") servico.id_servico_situacao = this.database.servico_situacao.Where(s => s.servico_situacao == "concluído").Single().id_servico_situacao;
+        servicos.Add(servico);
       }
     }
     return servicos;
   }
   public List<Composicao> Composicao()
   {
+    var temp = String.Empty;
     var composicoes = new List<Composicao>();
-    String? temp, test;
-    Int32 coluna;
-    if (Path.GetExtension(file.FileName) != ".xlsx")
+    if (Path.GetExtension(filename) != ".xlsx")
       throw new InvalidOperationException("Tipo de arquivo inválido!");
     ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     using (var reader = new ExcelPackage(stream))
@@ -166,7 +168,7 @@ public class FileManager
         throw new InvalidOperationException("O arquivo enviado tem mais de uma planilha!");
       var worksheet = reader.Workbook.Worksheets[0];
       var colCount = worksheet.Dimension.Columns;
-      var primeira_linha = new String[20];
+      var primeira_linha = new List<String>();
       primeira_linha[0] = colCount.ToString();
       for(int col = 1; col <= colCount; col++)
       {
@@ -180,153 +182,114 @@ public class FileManager
       {
         var composicao = new Composicao();
 
+
         temp = worksheet.GetValue<string>(row, cabecalho["data"]);
-        test = this.is_valid(temp, row, "Dia", ExpectedType.Date);
-        if (test == null) composicao.dia = DateOnly.FromDateTime(DateTime.Parse(temp));
-        else composicao.validacao.Add(test);
+        composicao.dia = Conversor.GetDateOnly(temp);
+        if(composicao.dia == null)
+          composicao.validacao.Add($"A data informada ({temp}) é inválida!");
+
 
         temp = worksheet.GetValue<string>(row, cabecalho["adesivo"]);
-        test = this.is_valid(temp, row, "Adesivo", ExpectedType.Number);
-        if (test == null) composicao.adesivo = Int32.Parse(temp);
-        else composicao.validacao.Add(test);
+        composicao.adesivo = Conversor.GetNumberMiddle(temp);
+        if(composicao.adesivo == null)
+          composicao.validacao.Add($"O adesivo informado ({temp}) é inválido!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["placa"]);
-        test = this.is_valid(temp, row, "Placa", ExpectedType.Text);
-        if (test == null) composicao.placa = temp.Replace("-", "").Replace(" ", "");
-        else composicao.validacao.Add(test);
+        composicao.placa = Conversor.GetTextPlate(temp);
+        if(composicao.placa == null)
+          composicao.validacao.Add($"A placa informada ({temp}) é inválida!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["recurso"]);
-        test = this.is_valid(temp, row, "Recurso", ExpectedType.Text);
-        var re = new System.Text.RegularExpressions.Regex("^([A-Z]{4,})(?: - [A-z]{3,})?( [-|–] Equipe )([0-9]{3})$");
-        if(test == null)
-        {
-          if(!re.IsMatch(temp.Trim())) composicao.validacao.Add("O recurso digitado é inválido!");
-          composicao.recurso = temp.Trim();
-        }
-        else composicao.validacao.Add(test);
+        composicao.recurso = Conversor.GetTextResource(temp);
+        if(composicao.recurso == null)
+          composicao.validacao.Add($"O recurso informado ({temp}) é inválido!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["atividade"]);
-        test = this.is_valid(temp, row, "Atividade", ExpectedType.Enum);
-        if(test == null)
-          composicao.atividade = Enum.Parse<Atividade>(temp
-            .Replace("RELIGA POSTO", "AVANCADO")
-            .Replace("RELIGA CAMINHÃO", "CAMINHAO")
-            .Replace("EMERGÊNCIA", "EMERGENCIA")
-            .Replace("CORTE EXTRA", "CORTE")
-            .Replace("ESTOQUE DE CORTADOS", "ESTOQUE"));
-        else composicao.validacao.Add(test);
-
-        composicao.tipo_viatura = (composicao.atividade == Atividade.CAMINHAO) ? TipoViatura.PESADO : TipoViatura.LEVE;
-
-        var func = new Funcionario();
+        temp = composicao.SanitizarAlavanca(temp);
+        temp = composicao.IsPesado(temp);
+        temp = composicao.IsNoturno(temp);
+        var atividade = this.database.atividade.Where(a => a.atividade == temp).SingleOrDefault();
+        if(atividade != null)
+          composicao.id_atividade = atividade.id_atividade;
+        else
+          composicao.validacao.Add($"A atividade informada ({temp}) é inválida!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["motorista"]);
-        test = this.is_valid(temp, row, "Motorista", ExpectedType.Text);
-        if(test == null)
-        {
-          composicao.motorista = temp.Trim();
-          func.nome_colaborador = temp.Trim();
-        }
-        else composicao.validacao.Add(test);
+        composicao.motorista = temp;
 
         temp = worksheet.GetValue<string>(row, cabecalho["id_motorista"]);
-        test = this.is_valid(temp, row, "Mat. Mot.", ExpectedType.Number);
-        if(test == null)
-        {
-          composicao.id_motorista = Int32.Parse(temp);
-          func.matricula = Int32.Parse(temp);
-        }
-        else composicao.validacao.Add(test);
+        composicao.id_motorista = Conversor.GetNumberMiddle(temp);
+        if(composicao.id_motorista == null)
+          composicao.validacao.Add($"A matrícula 1 informada ({temp}) é inválida!");
 
-        func.funcao = TipoFuncionario.ELETRICISTA;
-        if(!this.if_exist(func)) composicao.validacao.Add($"{func.matricula}: {func.nome_colaborador} não foi encontrado na lista ou nome não corresponde a matrícula!");
-
-        func = new Funcionario();
+        if(!this.if_exist(composicao.id_motorista, composicao.motorista))
+          composicao.validacao.Add($"{composicao.id_motorista}: {composicao.motorista} não foi encontrado na lista ou nome não corresponde a matrícula!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["ajudante"]);
-        test = this.is_valid(temp, row, "Ajudante", ExpectedType.Text);
-        if (test == null)
-        {
-          composicao.ajudante = temp.Trim();
-          func.nome_colaborador = temp.Trim();
-        }
-        else composicao.validacao.Add(test);
+        composicao.ajudante = temp;
 
         temp = worksheet.GetValue<string>(row, cabecalho["id_ajudante"]);
-        test = this.is_valid(temp, row, "Mat. Aju.", ExpectedType.Number);
-        if(test == null)
-        {
-          composicao.id_ajudante = Int32.Parse(temp);
-          func.matricula = Int32.Parse(temp);
-        }
-        else composicao.validacao.Add(test);
+        composicao.id_ajudante = Conversor.GetNumberMiddle(temp);
+        if(composicao.id_ajudante == null)
+          composicao.validacao.Add($"A matrícula 2 informada ({temp}) é inválida!");
 
-        func.funcao = TipoFuncionario.ELETRICISTA;
-        if (!this.if_exist(func)) composicao.validacao.Add($"{func.matricula}: {func.nome_colaborador} não foi encontrado na lista ou nome não corresponde a matrícula!");
+        if (!this.if_exist(composicao.id_ajudante, composicao.ajudante))
+          composicao.validacao.Add($"{composicao.id_ajudante}: {composicao.ajudante} não foi encontrado na lista ou nome não corresponde a matrícula!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["telefone"]);
-        test = this.is_valid(temp, row, "Telefone", ExpectedType.Number);
-        if(test == null)
+        temp = temp.Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
+        if(temp.Length == 9) temp = "21" + temp;
+        if(temp.Length == 11)
         {
-          temp = temp.Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-          if(temp.Length == 9) temp = "21" + temp;
-          if(temp.Length != 11) composicao.validacao.Add("A quantidade de dígitos do telefone está errada!");
-          else composicao.telefone = Int64.Parse(temp);
-        }
-        else composicao.validacao.Add("O número de telefone não é válido!");
-
-        func = new Funcionario();
-        func.funcao = TipoFuncionario.SUPERVISOR;
-        temp = worksheet.GetValue<string>(row, cabecalho["supervisor"]);
-        test = this.is_valid(temp, row, "Supervisor", ExpectedType.Text);
-        if(test == null)
-        {
-          composicao.supervisor = temp.Trim();
-          func.nome_colaborador = temp.Trim();
-        }
-        else composicao.validacao.Add(test);
-
-        if (cabecalho.TryGetValue("id_supervisor", out coluna))
-        {
-          temp = worksheet.GetValue<string>(row, coluna);
-          test = this.is_valid(temp, row, "Mat. Sup.", ExpectedType.Number);
-          if(test == null)
+          if(Int64.TryParse(temp, out Int64 telefone))
           {
-            composicao.id_supervisor = Int32.Parse(temp);
-            func.matricula = Int32.Parse(temp);
+            composicao.telefone = telefone;
           }
-          else composicao.validacao.Add(test);
-          if(!this.if_exist(func)) composicao.validacao.Add($"{func.matricula}: {func.nome_colaborador} não foi encontrado na lista ou nome não corresponde a matrícula!");
+          else
+          {
+            composicao.validacao.Add($"O telefone informado ({temp}) é inválido!");
+          }
         }
         else
         {
-          func.matricula = this.if_exist(func.nome_colaborador, func.funcao);
-          if(func.matricula == 0) composicao.validacao.Add($"Supervisor {func.nome_colaborador} não foi encontrado na lista ou nome não corresponde a matrícula!");
+          composicao.validacao.Add($"O telefone informado ({temp}) é inválido!");
         }
 
+        temp = worksheet.GetValue<string>(row, cabecalho["supervisor"]);
+        composicao.supervisor = temp;
+
+        if (cabecalho.TryGetValue("id_supervisor", out Int32 coluna))
+        {
+          temp = worksheet.GetValue<string>(row, coluna);
+          if(Int32.TryParse(temp, out Int32 id_supervisor))
+          {
+            composicao.id_supervisor = id_supervisor;
+          }
+          else
+          {
+            composicao.validacao.Add($"A matrícula sup. informada ({temp}) é inválida!");
+          }
+        }
+        else
+        {
+          var id_supervisor = this.if_exist(composicao.supervisor);
+          composicao.id_supervisor = id_supervisor;
+        }
+        if(!this.if_exist(composicao.id_supervisor, composicao.supervisor))
+          composicao.validacao.Add($"{composicao.id_supervisor}: {composicao.supervisor} não foi encontrado na lista ou nome não corresponde a matrícula!");
+
         temp = worksheet.GetValue<string>(row, cabecalho["regional"]);
-        test = this.is_valid(temp, row, "Regional", ExpectedType.Enum);
-        if(test == null)
-          composicao.regional = Enum.Parse<Regional>(temp
-            .Replace("CAMPO GRANDE", "OESTE")
-            .Replace("JACAREPAGUA", "OESTE"));
-        else composicao.validacao.Add(test);
+        temp = composicao.SanitizarRegional(temp);
+        composicao.id_regional = this.database.regional.Where(r => r.regional == temp).Single().id_regional;
 
         if (cabecalho.TryGetValue("controlador", out coluna))
         {
-          func = new Funcionario();
-          func.funcao = TipoFuncionario.ADMINISTRATIVO;
           temp = worksheet.GetValue<string>(row, coluna);
-          test = this.is_valid(temp, row, "Controlador", ExpectedType.Text);
-          if(test == null)
-          {
-            func.matricula = this.if_exist(func.nome_colaborador, func.funcao);
-            func.nome_colaborador = temp.Trim();
-            composicao.id_controlador = func.matricula;
-            composicao.controlador = func.nome_colaborador;
-          }
-          else composicao.validacao.Add(test);
-          if(func.matricula == 0) composicao.validacao.Add($"Controlador {func.nome_colaborador} não foi encontrado na lista ou nome não corresponde a matrícula!");
+          composicao.controlador = temp;
+          var id_controlador = this.if_exist(composicao.controlador);
+          composicao.id_controlador = id_controlador;
+          if(composicao.id_controlador == 0)
+            composicao.validacao.Add($"{composicao.id_controlador}: {composicao.controlador} não foi encontrado na lista ou nome não corresponde a matrícula!");
         }
 
         composicao.justificada = cabecalho.TryGetValue("justificada", out coluna) ? worksheet.GetValue<string>(row, coluna) : null;
@@ -335,84 +298,30 @@ public class FileManager
 
         if((composicao.dia != DateOnly.MinValue) && (composicao.recurso != null))
         {
-          composicao.abreviacao = abreviacao(composicao.recurso);
-          composicao.identificador = composicao.dia.ToString("yyyyMMdd") + composicao.abreviacao;
+          composicao.abreviacao = Conversor.Abreviacao(composicao.recurso);
+          composicao.identificador = Conversor.Identificador(composicao.dia, composicao.abreviacao);
         }
 
-        composicao.setor = this.is_setor(composicao.atividade);
+        // composicao.id_processo = this.is_setor(composicao.atividade);
 
         composicoes.Add(composicao);
       }
     }
     return composicoes;
   }
-  private SetorAtividade is_setor(Atividade atividade)
+  private bool if_exist(Int32? matricula, String? nome_colaborador)
   {
-    switch(atividade)
-    {
-      case Atividade.CORTE:
-      case Atividade.RELIGA:
-      case Atividade.AVANCADO:
-      case Atividade.CAMINHAO:
-      case Atividade.EMERGENCIA:
-      case Atividade.ESTOQUE:
-        return SetorAtividade.CORE;
-      case Atividade.CONVENCIONAL:
-      case Atividade.EXTERNALIZACAO:
-      case Atividade.MANUTENCAO_BT:
-      case Atividade.AFERICAO:
-      case Atividade.BTI:
-      case Atividade.ANEXO_4:
-        return SetorAtividade.REN;
-      case Atividade.LIDE:
-      case Atividade.VISTORIADOR:
-        return SetorAtividade.LIDE;
-      default: return SetorAtividade.NENHUM;
-    }
-  }
-  private string? is_valid(string? arg, int linha, string campo, ExpectedType expectedType)
-  {
-    if(arg == null) return $"O campo {campo} não foi preenchido!";
-    arg = arg.Trim();
-    switch(expectedType)
-    {
-      case ExpectedType.Date:
-        if(!DateTime.TryParse(arg, out DateTime diaTexto)) return "A data não pode ser reconhecida!";
-      break;
-      case ExpectedType.Time:
-        if(!TimeOnly.TryParse(arg, out TimeOnly hrs)) return "A hora não pode ser reconhecida!";
-      break;
-      case ExpectedType.Number:
-        arg = arg.Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-        if(!Int64.TryParse(arg, out Int64 num)) return "A número contém caracteres inválidos!";
-      break;
-      case ExpectedType.Text:
-        if(arg.Length < 5) return "O texto está incompleto ou vazio!";
-      break;
-      case ExpectedType.Enum:
-        String[] enums = {"BAIXADA", "CAMPO GRANDE", "JACAREPAGUA", "LESTE", "CORTE", "RELIGA", "RELIGA POSTO", "RELIGA CAMINHÃO", "EMERGÊNCIA", "ESTOQUE DE CORTADOS", "CORTE EXTRA"};
-        if(!enums.Contains(arg)) return "O texto encontrado não corresponde com o padrão!";
-      break;
-      case ExpectedType.Placa:
-        var re = new System.Text.RegularExpressions.Regex("^[0-9A-Z]{3}-[0-9A-Z]{4}$");
-        if (!re.IsMatch(arg)) return "O padrão da placa não está sendo obedecido! (I2E-AAAA)";
-      break;
-    }
-    return null;
-  }
-  private bool if_exist(Funcionario funcionario)
-  {
-    var func = this.database.funcionario.Find(funcionario.matricula);
+    if(matricula == null || nome_colaborador == null) return false;
+    var func = this.database.funcionario.Find(matricula);
     if(func == null) return false;
-    if(!(func.nome_colaborador.ToLower() == funcionario.nome_colaborador.ToLower())) return false;
-    if(!(func.funcao == funcionario.funcao)) return false;
+    if(!(func.nome_colaborador.ToLower() == nome_colaborador.ToLower())) return false;
     return true;
   }
-  private Int32 if_exist(String funcionario, TipoFuncionario tipoFuncionario)
+  private Int32 if_exist(String? funcionario)
   {
+    if(funcionario == null) return 0;
     var func = this.database.funcionario.Where(o => o.nome_colaborador.ToLower() == funcionario.ToLower()).SingleOrDefault();
     if(func == null) return 0;
-    if(!(func.funcao == tipoFuncionario)) return 0;
     return func.matricula;
   }
   private enum ExpectedType {Text, Number, Date, Time, Enum, Placa}
@@ -430,7 +339,7 @@ public class FileManager
     abreviado += re3.Match(recurso).Value;
     return abreviado;
   }
-  private Dictionary<String, Int32> Cabecalho(String[] primeira_linha)
+  private Dictionary<String, Int32> Cabecalho(List<String> primeira_linha)
   {
     Dictionary<String, Int32> cabecalho = new();
     var apontador = 1;
@@ -464,7 +373,7 @@ public class FileManager
         default: throw new InvalidOperationException("O nome da coluna não foi reconhecido!");
       }
       apontador += 1;
-    } while (apontador < primeira_linha.Length);
+    } while (apontador < primeira_linha.Count);
     return cabecalho;
   }
 }
