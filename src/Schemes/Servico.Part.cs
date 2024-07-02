@@ -4,8 +4,8 @@ namespace backend.Models
   {
     public void Timestamp()
     {
-      if(hora_final == null) return;
-      this.timestamp = dia.ToDateTime((System.TimeOnly)hora_final);
+      if(hora_final == null || dia == null) return;
+      this.timestamp = ((DateOnly)dia).ToDateTime((System.TimeOnly)hora_final);
     }
     public void Valoracao()
     {
@@ -16,7 +16,7 @@ namespace backend.Models
         return;
       }
       // caso não tenha código preenchido
-      if(String.IsNullOrEmpty(this.codigos))
+      if(String.IsNullOrEmpty(this.codigos_concaternados))
       {
         this.id_grupo_codes = String.Empty;
         return;
@@ -34,7 +34,7 @@ namespace backend.Models
           this.id_grupo_codes = "S.MD";
           return;
         }
-        this.id_grupo_codes = this.codigos;
+        this.id_grupo_codes = this.codigos_concaternados;
         return;
       }
       // caso o tipo de serviço é RELIGA
@@ -50,7 +50,7 @@ namespace backend.Models
           this.id_grupo_codes = "S.MD";
           return;
         }
-        this.id_grupo_codes = this.codigos;
+        this.id_grupo_codes = this.codigos_concaternados;
         return;
       }
       // caso o tipo de serviço é EMERGÊNCIA

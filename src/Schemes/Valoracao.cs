@@ -3,20 +3,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace backend.Models;
 public class Valoracao
 {
-  public String? contrato { get; set; }
-  public Regional regional { get; set; }
-  public TipoViatura tipo_viatura { get; set; }
-  public Atividade atividade { get; set; }
+  public Double id_contrato { get; set; }
+  public Int32 id_regional { get; set; }
+  public Int32 id_tipo_viatura { get; set; }
+  public Int32 id_atividade { get; set; }
   public String codigo { get; set; }
   [Column(TypeName="money")]
   public Decimal valor { get; set; }
-  public Valoracao(Regional regional, TipoViatura tipo_viatura, Atividade atividade, String codigo, Decimal valor, String? contrato = null)
+  public Valoracao(Int32 id_regional, Int32 id_tipo_viatura, Int32 id_atividade, String codigo, Decimal valor, Double id_contrato)
   {
-    this.regional = regional;
-    this.tipo_viatura = tipo_viatura;
-    this.atividade = atividade;
+    this.id_regional = id_regional;
+    this.id_tipo_viatura = id_tipo_viatura;
+    this.id_atividade = id_atividade;
     this.codigo = codigo;
     this.valor = valor;
-    this.contrato = contrato;
+    this.id_contrato = id_contrato;
   }
 }
