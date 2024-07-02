@@ -61,12 +61,13 @@ namespace backend.Controllers
               _context.SaveChanges();
               alteracaoLog.responsavel = auth.matricula;
               alteracaoLog.Registrar("PUT", anterior, auth);
+              var response = new AutenticacaoRequisicao(auth.matricula, auth.palavra);
+              return Ok(response);
             }
             catch (DbUpdateConcurrencyException erro)
             {
-              Problem(erro.InnerException?.Message);
+              return Problem(erro.InnerException?.Message);
             }
-            return Ok();
           }
           catch (DbUpdateConcurrencyException erro)
           {
