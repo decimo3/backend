@@ -130,8 +130,9 @@ namespace backend.Controllers
             return NoContent();
         }
 
-        private bool ComposicaoExists(DateOnly data, string recurso)
+        private bool ComposicaoExists(DateOnly? data, String? recurso)
         {
+          if(data == null || recurso == null) return true;
             return (database.composicao?.Any(e => e.recurso == recurso && e.dia == data)).GetValueOrDefault();
         }
         [HttpPost("Arquivo")]
@@ -167,13 +168,19 @@ namespace backend.Controllers
               return Problem(erro.Message);
             }
         }
-        private bool DiasUteisExist(DateOnly data)
+        private bool DiasUteisExist(DateOnly? data)
         {
-          return this.database.dias_uteis.Find(new DateOnly(year: data.Year, month: data.Month, day: 1)) != null;
+          if(data == null) return false;
+          var date = (DateOnly)data;
+          var dias_uteis = new DiasUteis(new DateOnly(year: date.Year, month: date.Month, day: 1));
+          return this.database.dias_uteis.Find(dias_uteis.id_dias_uteis) != null;
         }
-        private void DiasUteisInsert(DateOnly data)
+        private void DiasUteisInsert(DateOnly? data)
         {
-          this.database.dias_uteis.Add(new DiasUteis(new DateOnly(year: data.Year, month: data.Month, day: 1)));
+          if(data == null) throw new NullReferenceException("A data não pode ser nula!");
+          var date = (DateOnly)data;
+          var dias_uteis = new DiasUteis(new DateOnly(year: date.Year, month: date.Month, day: 1));
+          this.database.dias_uteis.Add(dias_uteis);
           this.database.SaveChanges();
         }
     }
