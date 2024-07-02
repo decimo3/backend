@@ -20,22 +20,22 @@ public class ObjetivosController : ControllerBase
           if(funcionario != null) this.alteracaoLog.responsavel = funcionario.matricula;
         }
     }
-    private bool ObjetivosExists(Regional regional, TipoViatura tipoviatura, Atividade atividade)
+    private bool ObjetivosExists(Int32 regional, Int32 tipoviatura, Int32 atividade)
     {
-        return (_context.objetivo?.Any(e => e.regional == regional && e.tipo_viatura == tipoviatura && e.atividade == atividade)).GetValueOrDefault();
+        return (_context.objetivo?.Any(e => e.id_regional == regional && e.id_tipo_viatura == tipoviatura && e.id_atividade == atividade)).GetValueOrDefault();
     }
     [HttpPost]
     public async Task<ActionResult<Objetivos>> PostObjetivos(Objetivos objetivos)
     {
         if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
         if (_context.objetivo == null) return Problem("Entity set 'Database.objetivo'  is null.");
-        if (ObjetivosExists(objetivos.regional, objetivos.tipo_viatura, objetivos.atividade)) return Conflict();
+        if (ObjetivosExists(objetivos.id_regional, objetivos.id_tipo_viatura, objetivos.id_atividade)) return Conflict();
         _context.objetivo.Add(objetivos);
         try
         {
             await _context.SaveChangesAsync();
             alteracaoLog.Registrar("POST", null, objetivos);
-            return CreatedAtAction("GetObjetivos", new { id = objetivos.regional }, objetivos);
+            return CreatedAtAction("GetObjetivos", new { id = objetivos.id_regional }, objetivos);
         }
         catch (DbUpdateConcurrencyException erro)
         {
@@ -53,7 +53,7 @@ public class ObjetivosController : ControllerBase
         return await _context.objetivo.ToListAsync();
     }
     [HttpDelete("{regional}/{viatura}/{atividade}")]
-    public async Task<IActionResult> DeleteObjetivos(Regional regional, TipoViatura viatura, Atividade atividade)
+    public async Task<IActionResult> DeleteObjetivos(Int32 regional, Int32 viatura, Int32 atividade)
     {
         if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
         if (_context.objetivo == null) return NotFound();

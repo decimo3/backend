@@ -29,13 +29,13 @@ namespace backend.Controllers
         }
         // GET: api/Composicao
         [HttpGet("{inicio}/{final}/{regional}/{atividade}")]
-        public async Task<ActionResult<IEnumerable<Composicao>>> Getcomposicao(DateOnly inicio, DateOnly final, Regional regional, Atividade atividade)
+        public async Task<ActionResult<IEnumerable<Composicao>>> Getcomposicao(DateOnly inicio, DateOnly final, Int32 regional, Int32 atividade)
         {
           if (database.composicao == null) return NotFound();
-          if (atividade == Atividade.NENHUM && regional == Regional.NENHUM) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) select f).ToListAsync();
-          if (regional == Regional.NENHUM && atividade != Atividade.NENHUM) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.atividade == atividade) select f).ToListAsync();
-          if (atividade == Atividade.NENHUM && regional != Regional.NENHUM) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.regional == regional) select f).ToListAsync();
-          return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.regional == regional) && (f.atividade == atividade) select f).ToListAsync();
+          if (atividade == 0 && regional == 0) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) select f).ToListAsync();
+          if (regional == 0 && atividade > 0) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.id_atividade == atividade) select f).ToListAsync();
+          if (atividade == 0 && regional > 0) return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.id_regional == regional) select f).ToListAsync();
+          return await (from f in database.composicao where (f.dia >= inicio) && (f.dia <= final) && (f.id_regional == regional) && (f.id_atividade == atividade) select f).ToListAsync();
         }
         // PUT: api/Composicao/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

@@ -20,22 +20,22 @@ public class ValoracaoController : ControllerBase
           if(funcionario != null) this.alteracaoLog.responsavel = funcionario.matricula;
         }
     }
-    private bool ValoracaoExists(Regional regional, TipoViatura viatura, Atividade atividade, String codigo)
+    private bool ValoracaoExists(Int32 regional, Int32 viatura, Int32 atividade, String codigo)
     {
-        return (_context.valoracao?.Any(e => e.regional == regional && e.tipo_viatura == viatura && e.atividade == atividade && e.codigo == codigo)).GetValueOrDefault();
+        return (_context.valoracao?.Any(e => e.id_regional == regional && e.id_tipo_viatura == viatura && e.id_atividade == atividade && e.codigo == codigo)).GetValueOrDefault();
     }
     [HttpPost]
     public async Task<ActionResult<Valoracao>> PostValoracao(Valoracao valoracao)
     {
         if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
         if (_context.valoracao == null) return Problem("Entity set 'Database.valoracao'  is null.");
-        if (ValoracaoExists(valoracao.regional, valoracao.tipo_viatura, valoracao.atividade, valoracao.codigo)) return Conflict();
+        if (ValoracaoExists(valoracao.id_regional, valoracao.id_tipo_viatura, valoracao.id_atividade, valoracao.codigo)) return Conflict();
         _context.valoracao.Add(valoracao);
         try
         {
             await _context.SaveChangesAsync();
             alteracaoLog.Registrar("POST", null, valoracao);
-            return CreatedAtAction("GetValoracao", new { regional = valoracao.regional, viatura = valoracao.tipo_viatura, atividade = valoracao.atividade, codigo = valoracao.codigo }, valoracao);
+            return CreatedAtAction("GetValoracao", new { regional = valoracao.id_regional, viatura = valoracao.id_tipo_viatura, atividade = valoracao.id_atividade, codigo = valoracao.codigo }, valoracao);
         }
         catch (DbUpdateConcurrencyException erro)
         {
@@ -53,7 +53,7 @@ public class ValoracaoController : ControllerBase
         return await _context.valoracao.ToListAsync();
     }
     [HttpDelete("{regional}/{viatura}/{atividade}/{codigo}")]
-    public async Task<IActionResult> DeleteValoracao(Regional regional, TipoViatura viatura, Atividade atividade, String codigo)
+    public async Task<IActionResult> DeleteValoracao(Int32 regional, Int32 viatura, Int32 atividade, String codigo)
     {
         if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
         if (_context.valoracao == null) return NotFound();

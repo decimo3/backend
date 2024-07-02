@@ -13,7 +13,7 @@ public class EstatisticaController : ControllerBase
     _context = context;
   }
   [HttpGet("{inicio}/{final}/{regional}/{atividade}")]
-  public ActionResult Index(DateOnly inicio, DateOnly final, Regional regional, Atividade atividade)
+  public ActionResult Index(DateOnly inicio, DateOnly final, Int32 regional, Int32 atividade)
   {
     return Ok(new {message = "Works fine!"});
   }

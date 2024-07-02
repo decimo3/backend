@@ -21,7 +21,7 @@ public class ContratoController : ControllerBase
           if(funcionario != null) this.alteracaoLog.responsavel = funcionario.matricula;
         }
     }
-    private bool ContratoExists(string id)
+    private bool ContratoExists(Int64 id)
     {
         return (_context.contrato?.Any(e => e.contrato == id)).GetValueOrDefault();
     }

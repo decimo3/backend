@@ -145,9 +145,9 @@ namespace backend.Controllers
               matricula = f.matricula,
               nome_colaborador = f.nome_colaborador,
               admissao = f.admissao,
-              funcao = f.funcao,
-              regional = f.regional,
-              atividade = f.atividade
+              id_funcionario_funcao = f.id_funcionario_funcao,
+              id_regional = f.id_regional,
+              id_processo = f.id_processo
             };
             _context.funcionario.Add(funcionario);
             try
@@ -173,7 +173,7 @@ namespace backend.Controllers
           var funcionario = await _context.funcionario.FindAsync(id);
           if (funcionario == null) return NotFound();
           var anterior = funcionario;
-          funcionario.situacao = SituacaoFuncionario.DESLIGADO;
+          funcionario.id_funcionario_situacao = _context.funcionario_situacao.Where(s => s.funcionario_situacao == "desligado").Single().id_funcionario_situacao;
           try
           {
             await _context.SaveChangesAsync();

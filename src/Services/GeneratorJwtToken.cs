@@ -10,7 +10,7 @@ public class JwtTokenGenerator
       var key = System.Text.Encoding.ASCII.GetBytes(segredo);
       var symmetricKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key);
       var claimRe = new System.Security.Claims.Claim("re", funcionario.matricula.ToString());
-      var claimFn = new System.Security.Claims.Claim("funcao", funcionario.funcao.ToString());
+      var claimFn = new System.Security.Claims.Claim("funcao", funcionario.id_funcionario_funcao.ToString());
       var claimNm = new System.Security.Claims.Claim("sub", funcionario.nome_colaborador);
       var claims = new[] { claimRe, claimFn, claimNm };
       var tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
@@ -32,7 +32,7 @@ public class JwtTokenGenerator
     {
       re = funcionario.matricula,
       sub = funcionario.nome_colaborador,
-      role = funcionario.funcao,
+      role = funcionario.id_funcionario_funcao,
       iat = UnixTimestamp(DateTime.Now),
       exp = UnixTimestamp(DateTime.Now.AddDays(7))
     };
