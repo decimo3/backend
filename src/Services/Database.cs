@@ -1,4 +1,5 @@
 using backend.Models;
+using backend.Commons;
 using Microsoft.EntityFrameworkCore;
 namespace backend.Services;
 public class Database : DbContext
@@ -8,6 +9,8 @@ public class Database : DbContext
     if(System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
     {
       dotenv.net.DotEnv.Fluent().WithEnvFiles(".env").Load();
+      optionsBuilder.EnableSensitiveDataLogging();
+      optionsBuilder.EnableDetailedErrors();
     }
       var dbhost = System.Environment.GetEnvironmentVariable("PGHOST");
       if(dbhost is null) throw new InvalidOperationException("Environment variable PGHOST is not set!");
@@ -45,4 +48,16 @@ public class Database : DbContext
   public DbSet<RelatorioEstatisticas> relatorioEstatisticas { get; set; }
   public DbSet<Alteracao> alteracao { get; set; }
   public DbSet<DiasUteis> dias_uteis { get; set; }
+  public DbSet<Regional> regional { get; set; }
+  public DbSet<Atividade> atividade { get; set; }
+  public DbSet<ViaturaTipo> viatura_tipo { get; set; }
+  public DbSet<ComposicaoHorario> composicao_horario { get; set; }
+  public DbSet<ServicoSituacao> servico_situacao { get; set; }
+  public DbSet<ServicoFaseado> servico_faseado { get; set; }
+  public DbSet<ServicoTipo> servico_tipo { get; set; }
+  public DbSet<ServicoLocalidade> servico_localidade { get; set; }
+  public DbSet<Processo> processo { get; set; }
+  public DbSet<FuncionarioSituacao> funcionario_situacao { get; set; }
+  public DbSet<FuncionarioFuncao> funcionario_funcao { get; set; }
+  public DbSet<ProcessoAtividade> processo_atividade { get; set; }
 }
