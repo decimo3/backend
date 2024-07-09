@@ -12,15 +12,15 @@ public class Database : DbContext
       optionsBuilder.EnableSensitiveDataLogging();
       optionsBuilder.EnableDetailedErrors();
     }
-      var dbhost = System.Environment.GetEnvironmentVariable("PGHOST");
+      var dbhost = System.Environment.GetEnvironmentVariable("POSTGRES_HOST");
       if(dbhost is null) throw new InvalidOperationException("Environment variable PGHOST is not set!");
-      var dbport = System.Environment.GetEnvironmentVariable("PGPORT");
+      var dbport = System.Environment.GetEnvironmentVariable("POSTGRES_PORT");
       if(dbport is null) throw new InvalidOperationException("Environment variable PGPORT is not set!");
-      var dbuser = System.Environment.GetEnvironmentVariable("PGUSER");
+      var dbuser = System.Environment.GetEnvironmentVariable("POSTGRES_USER");
       if(dbuser is null) throw new InvalidOperationException("Environment variable PGUSER is not set!");
-      var dbpass = System.Environment.GetEnvironmentVariable("PGPASSWORD");
+      var dbpass = System.Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
       if(dbpass is null) throw new InvalidOperationException("Environment variable PGPASSWORD is not set!");
-      var dbbase = System.Environment.GetEnvironmentVariable("PGDATABASE");
+      var dbbase = System.Environment.GetEnvironmentVariable("POSTGRES_DB");
       if(dbbase is null) throw new InvalidOperationException("Environment variable PGDATABASE is not set!");
       var stringconnection = new Npgsql.NpgsqlConnectionStringBuilder()
       {
