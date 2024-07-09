@@ -14,8 +14,8 @@ public class AutenticacaoMiddleware
     public AutenticacaoMiddleware(RequestDelegate request)
   {
     this.request = request;
-    this.segredo = System.Environment.GetEnvironmentVariable("SECRET_KEY");
-    if (segredo is null) throw new InvalidOperationException("Environment variable SECRET_KEY is not set!");
+    this.segredo = System.Environment.GetEnvironmentVariable("SECRET_KEY") ??
+      throw new InvalidOperationException("Environment variable SECRET_KEY is not set!");
   }
   private void AttachUserToContext(HttpContext context, AutenticacaoServico autenticacaoServico, string token)
   {
