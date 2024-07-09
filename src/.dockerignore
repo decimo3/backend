@@ -1,0 +1,9 @@
+bin
+obj
+AppData
+.vscode
+Historic
+Temporario
+Documentation
+.env
+.env.dev
