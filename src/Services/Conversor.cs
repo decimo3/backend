@@ -55,6 +55,7 @@ public static class Conversor
     if(!re3.IsMatch(recurso)) return null;
     var abreviado = String.Empty;
     abreviado += re1.Match(recurso).Value;
+    if(re2.Match(recurso).Value == "Vistoriador") abreviado += 'V';
     if(re2.Match(recurso).Value == "Religa") abreviado += 'R';
     if(re2.Match(recurso).Value == "Corte") abreviado += 'C';
     abreviado += re3.Match(recurso).Value;
