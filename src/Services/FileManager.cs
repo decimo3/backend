@@ -14,7 +14,7 @@ public class FileManager
   {
     var reader = new StreamReader(stream);
     var memory = new MemoryStream();
-    var writer = new StreamWriter(memory);
+    var writer = new StreamWriter(memory, System.Text.Encoding.UTF8);
     int character = 0;
     bool insideField = false;
     while ((character = reader.Read()) != -1)
