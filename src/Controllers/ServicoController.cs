@@ -34,7 +34,7 @@ namespace backend.Controllers
             if (file.Length == 0) return BadRequest("O arquivo enviado está vazio!");
             if(_context.relatorio.Any(r => r.filename == file.FileName))
                 return Conflict("Já existe um relatório com esse nome de arquivo!\nSe for um reenvio, considere trocar o nome do arquivo ou excluir o relatório anterior!");
-            var filemanager = new FileManager(_context, file.OpenReadStream(), file.FileName);
+            var filemanager = new FileManager(file.OpenReadStream(), file.FileName);
             var relatorio = filemanager.Relatorio();
             var adicionado = 0;
             var atualizado = 0;
@@ -75,7 +75,7 @@ namespace backend.Controllers
         private void SetServico(String filename)
         {
           var filtrado = _context.relatorio.Where(e => e.filename == filename);
-          var relatorios = from f in filtrado orderby f.dia descending group f by f.filename into g orderby g.Key descending select new {filename = g.Key, servicos = g.Count(x => x.ordem_de_servico > 0 && x.id_servico_situacao != 0), recursos = g.Count(x => x.tipo_atividade == "Início de turno"), dia = g.First().dia};
+          var relatorios = from f in filtrado orderby f.dia descending group f by f.filename into g orderby g.Key descending select new {filename = g.Key, servicos = g.Count(x => x.ordem_de_servico > 0 && x.id_servico_situacao != "cancelado"), recursos = g.Count(x => x.tipo_atividade == "Início de turno"), dia = g.First().dia};
           foreach (var relatorio in relatorios.ToList())
           {
             var stats = new RelatorioEstatisticas(relatorio.filename, (DateOnly)relatorio.dia!, relatorio.recursos, relatorio.servicos);

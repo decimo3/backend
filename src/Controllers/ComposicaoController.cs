@@ -141,7 +141,7 @@ namespace backend.Controllers
         {
             if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
             if (file.Length == 0) return BadRequest("O arquivo enviado está vazio!");
-            var filemanager = new FileManager(database, file.OpenReadStream(), file.FileName);
+            var filemanager = new FileManager(file.OpenReadStream(), file.FileName);
             try
             {
               var composicoes = filemanager.Composicao();
