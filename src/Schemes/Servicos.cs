@@ -14,7 +14,7 @@ public partial class Servico
   [Key]
   [DatabaseGenerated(DatabaseGeneratedOption.None)]
   public Int64? serial { get; set; }
-  public Int32? id_servico_situacao { get; set; }
+  public String? id_servico_situacao { get; set; }
   [StringLength(100)]
   public String? nome_do_cliente { get; set; }
   [StringLength(120)]
@@ -55,7 +55,7 @@ public partial class Servico
   public String? tipo_atividade_1 { get; set; }
   public Int64? ordem_de_servico { get; set; }
   [StringLength(0)]
-  public String? numero_da_conta { get; set; }
+  public Int64? numero_da_conta { get; set; }
   [StringLength(100)]
   public String? habilidade_de_trabalho { get; set; }
   public Int32? area_trabalho { get; set; }
@@ -118,9 +118,9 @@ public partial class Servico
   public String? complemento { get; set; }
   [StringLength(30)]
   public String? intervalo_de_tempo { get; set; }
-  [StringLength(10)]
+  [StringLength(4)]
   public String? motivo_de_rejeicao { get; set; }
-  [StringLength(5)]
+  [StringLength(2)]
   public String? tipo_de_nota_de_servico { get; set; }
   [DataType(DataType.DateTime)]
   public DateTime? tempo_de_reserva_da_atividade { get; set; }
@@ -148,9 +148,12 @@ public partial class Servico
   public Int32? chi { get; set; }
   public Int32? tempo_interrompido { get; set; }
   public Int32? valor_compensacao_financeira { get; set; }
+  [StringLength(30)]
   public String? identificador { get; set; }
+  [StringLength(10)]
   public String? abreviacao { get; set; }
-  public DateTime? timestamp { get; set; } = null;
+  public DateTime? timestamp { get; set; }
+  [StringLength(50)]
   public String? codigos_concaternados { get; set; }
   /*
   0 = nenhum;
