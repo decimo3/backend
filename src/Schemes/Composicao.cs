@@ -12,6 +12,7 @@ public class Composicao
   public String? placa { get; set; }
   public String? recurso { get; set; }
   public Int32 id_atividade { get; set; }
+  public String? atividade { get; set; }
   public String? motorista { get; set; }
   public Int32? id_motorista { get; set; }
   public String? ajudante { get; set; }
@@ -20,6 +21,7 @@ public class Composicao
   public Int32? id_supervisor { get; set; }
   public String? supervisor { get; set; }
   public Int32? id_regional { get; set; }
+  public String? regional { get; set; }
   public Int32? id_tipo_viatura { get; set; } = 1;
   [NotMapped]
   public List<string> validacao { get; set; } = new();
@@ -32,41 +34,43 @@ public class Composicao
   public Int32? id_processo { get; set; }
   public Int32? id_horario_equipe { get; set; }
   public Double id_contrato { get; set; }
-  public String IsPesado(String atividade)
+  public void IsPesado()
   {
-    if(atividade.Contains("PESADO"))
+    if(this.atividade == null) return;
+    if(this.atividade.Contains("PESADO"))
     {
       this.id_tipo_viatura = 2;
-      return atividade.Replace(" PESADO", "");
+      this.atividade = this.atividade.Replace(" PESADO", "");
     }
-    if(atividade.Contains("CAMINHÃO"))
+    if(this.atividade.Contains("CAMINHÃO"))
     {
       this.id_tipo_viatura = 2;
-      return atividade.Replace(" CAMINHÃO", "");
+      this.atividade = this.atividade.Replace(" CAMINHÃO", "");
     }
-    return atividade;
   }
-  public String IsNoturno(String atividade)
+  public void IsNoturno()
   {
-    if(atividade.Contains("POSTO"))
+    if(this.atividade == null) return;
+    if(this.atividade.Contains("POSTO"))
     {
       this.id_horario_equipe = 2;
-      return atividade.Replace(" POSTO", "");
+      this.atividade = this.atividade.Replace(" POSTO", "");
     }
-    return atividade;
   }
-  public String SanitizarAlavanca(String atividade)
+  public void SanitizarAlavanca()
   {
-    return atividade.Replace(" OE", "")
-                    .Replace(" BX", "")
-                    .Replace(" OESTE", "")
-                    .Replace(" EXTRAS", "")
-                    .Replace(" LESTE", "");
+    if(this.atividade == null) return;
+    String[] exclusoes = {" OE", " BX", " OESTE", " EXTRAS", " LESTE", " PROJETO"};
+    foreach (var exclusao in exclusoes)
+    {
+      this.atividade = this.atividade.Replace(exclusao, "");
+    }
   }
-  public String SanitizarRegional(String regional)
+  public void SanitizarRegional()
   {
-    return regional.Replace("CAMPO GRANDE", "OESTE")
-                    .Replace("JACAREPAGUA", "OESTE");
+    if(this.regional == null) return;
+    this.regional = this.regional.Replace("CAMPO GRANDE", "OESTE");
+    this.regional = this.regional.Replace("JACAREPAGUA", "OESTE");
   }
 }
 
