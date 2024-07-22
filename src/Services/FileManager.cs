@@ -74,8 +74,8 @@ public class FileManager
         servico.cidade_destino = values[6];
         servico.estado_destino = values[7];
         servico.codigo_postal = Conversor.GetNumberMiddle(values[8]);
-        servico.telefone_cliente = Conversor.GetNumberLong(values[9]);
-        servico.celular_cliente = Conversor.GetNumberLong(values[10]);
+        servico.telefone_cliente = Conversor.GetPhoneNumber(values[9]);
+        servico.celular_cliente = Conversor.GetPhoneNumber(values[10]);
         servico.email_cliente = values[11];
         servico.hora_inicio = Conversor.GetTimeOnly(values[12]);
         servico.hora_final = Conversor.GetTimeOnly(values[13]);
@@ -87,9 +87,9 @@ public class FileManager
         servico.tipo_atividade = values[19];
         servico.tipo_atividade_1 = values[20];
         servico.ordem_de_servico = Conversor.GetNumberLong(values[21]);
-        servico.numero_da_conta = values[22];
+        servico.numero_da_conta = Conversor.GetNumberLong(values[22]);
         servico.habilidade_de_trabalho = values[23];
-        servico.area_trabalho = this.database.servico_localidade.Where(s => s.servico_localidade == values[24]).Single().id_servico_localidade;
+        servico.area_trabalho = Conversor.GetLocationNumber(values[24]);
         servico.primeira_operacao_manual = values[25];
         servico.primeira_operacao_manual_login = values[26];
         servico.primeira_operacao_manual_nome = values[27];
@@ -237,21 +237,8 @@ public class FileManager
           composicao.validacao.Add($"{composicao.id_ajudante}: {composicao.ajudante} não foi encontrado na lista ou nome não corresponde a matrícula!");
 
         temp = worksheet.GetValue<string>(row, cabecalho["telefone"]);
-        temp = temp.Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-        if(temp.Length == 9) temp = "21" + temp;
-        if(temp.Length == 11)
-        {
-          if(Int64.TryParse(temp, out Int64 telefone))
-          {
-            composicao.telefone = telefone;
-          }
-          else
-          {
-            composicao.validacao.Add($"O telefone informado ({temp}) é inválido!");
-          }
-        }
-        else
-        {
+        composicao.telefone = Conversor.GetPhoneNumber(temp);
+        if(composicao.telefone == null)
           composicao.validacao.Add($"O telefone informado ({temp}) é inválido!");
         }
 
