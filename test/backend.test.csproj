@@ -25,5 +25,6 @@
   <ItemGroup>
     <None Include="SampleData\DiasUteis.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="SampleData\Servicos.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="SampleData\Servicos.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
