@@ -83,4 +83,16 @@ public static class Conversor
     return new Regex("^([A-Z]{4,})(?: - [A-z]{3,})?( [-|–] Equipe )([0-9]{3})$").IsMatch(text)
       ? text : null;
   }
+  public static Int32? GetLocationNumber(String text)
+  {
+    var re_local = new System.Text.RegularExpressions.Regex(@"[0-9]{3}");
+    return re_local.IsMatch(text) ? Int32.Parse(re_local.Match(text).Value) : null;
+  }
+  public static Int64? GetPhoneNumber(String text)
+  {
+    if(String.IsNullOrEmpty(text)) return null;
+    var re = new System.Text.RegularExpressions.Regex(@"\d+");
+    var combined = re.Matches(text);
+    return Int64.Parse(String.Join("", combined));
+  }
 }
