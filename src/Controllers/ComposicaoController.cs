@@ -15,10 +15,12 @@ namespace backend.Controllers
     public class ComposicaoController : ControllerBase
     {
         private readonly Database database;
+        private readonly ComposicaoCheck checagem;
         private readonly AlteracoesServico alteracaoLog;
         public ComposicaoController(Database database, IHttpContextAccessor httpContext, AlteracoesServico alteracaoLog)
         {
             this.database = database;
+            this.checagem = new ComposicaoCheck(this.database);
             this.alteracaoLog = alteracaoLog;
             this.alteracaoLog.tabela = this.ToString()!;
             if(httpContext.HttpContext != null)
@@ -43,7 +45,7 @@ namespace backend.Controllers
         public ActionResult PutComposicao(DateOnly data, string recurso, Composicao composicao)
         {
             if(!this.alteracaoLog.is_ready()) return Unauthorized("Usuário não foi encontrado no contexto da solicitação!");
-            if (!ComposicaoExists(data, recurso)) return NotFound();
+            if(!ComposicaoExists(data, recurso)) return NotFound();
             if (recurso != composicao.recurso)
             {
                 if (ComposicaoExists(composicao.dia, composicao.recurso)) return Conflict();
@@ -144,9 +146,10 @@ namespace backend.Controllers
             var filemanager = new FileManager(file.OpenReadStream(), file.FileName);
             try
             {
-              var composicoes = filemanager.Composicao();
-              if (composicoes.Select(a => a.dia).Distinct().Count() > 1)
+              var composicoes_obj = filemanager.Composicao();
+              if (composicoes_obj.Select(a => a.dia).Distinct().Count() > 1)
                 throw new InvalidOperationException("A composição enviada contém mais de uma data!\nA composição deve ser enviada um dia por vez.");
+              var composicoes = this.checagem.CheckComposicao(composicoes_obj);
               var data = composicoes.First().dia;
               if(!DiasUteisExist(data)) DiasUteisInsert(data);
               if (composicoes.Where(c => c.validacao.Any()).Any()) return UnprocessableEntity(composicoes);
