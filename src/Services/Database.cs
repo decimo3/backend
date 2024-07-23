@@ -37,6 +37,7 @@ public class Database : DbContext
     modelBuilder.Entity<Composicao>().HasKey(o => new {o.dia, o.recurso});
     modelBuilder.Entity<Objetivos>().HasKey(o => new {o.id_regional, o.id_tipo_viatura, o.id_atividade});
     modelBuilder.Entity<Valoracao>().HasKey(o => new {o.id_regional, o.id_tipo_viatura, o.id_atividade, o.codigo});
+    modelBuilder.Entity<ProcessoAtividade>().HasKey(x => new {x.id_atividade, x.id_processo});
   }
   public DbSet<Composicao> composicao { get; set; }
   public DbSet<Servico> relatorio { get; set; }
