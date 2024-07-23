@@ -1,42 +1,81 @@
-CREATE TABLE IF NOT EXIST eletricista
-(
-  matricula INT NOT NULL,
-  nome_completo VARCHAR(64) UNIQUE,
-  CONSTRAINT PK_eletricista PRIMARY KEY (matricula)
-);
-CREATE TABLE IF NOT EXIST supervisor
-(
-  matricula INT NOT NULL,
-  nome_completo VARCHAR(64) UNIQUE,
-  CONSTRAINT PK_supervisor PRIMARY KEY (matricula)
-);
-CREATE TABLE IF NOT EXIST atividade
-(
-  id INT NOT NULL,
-  atividade VARCHAR(16) UNIQUE,
-  CONSTRAINT PK_atividade PRIMARY KEY (id)
-);
-CREATE TABLE IF NOT EXIST regional
-(
-  id INT NOT NULL,
-  regional VARCHAR(16) UNIQUE,
-  CONSTRAINT PK_regional PRIMARY KEY (id)
-);
-CREATE TABLE IF NOT EXIST composicao
-(
-  dia DATE NOT NULL,
-  adesivo INT NOT NULL,
-  placa CHAR(7) NOT NULL,
-  recurso VARCHAR(32) NOT NULL,
-  atividade INT NOT NULL,
-  motorista INT NOT NULL,
-  ajudante INT NOT NULL,
-  supervisor INT NOT NULL,
-  regional INT NOT NULL,
-  CONSTRAINT PK_composicao PRIMARY KEY (dia,recurso),
-  CONSTRAINT FK_motorista FOREIGN KEY (motorista) REFERENCES eletricista(matricula),
-  CONSTRAINT FK_ajudante FOREIGN KEY (ajudante) REFERENCES eletricista(matricula),
-  CONSTRAINT FK_supervisor FOREIGN KEY (supervisor) REFERENCES supervisor(matricula),
-  CONSTRAINT FK_regional FOREIGN KEY (regional) REFERENCES regional(id),
-  CONSTRAINT FK_atividade FOREIGN KEY (atividade) REFERENCES atividade(id)
-);
+INSERT INTO atividade (id_processo, id_atividade, atividade) VALUES
+(11, 'CORTE'),
+(12, 'RELIGA'),
+(13, 'RELIGA POSTO'),
+(14, 'RELIGA CAMINHÃO'),
+(15, 'ESTOQUE DE CORTADOS')
+(16, 'CORTE PILOTO'),
+(21, 'CONVENCIONAL'),
+(22, 'EXTERNALIZAÇÃO'),
+(23, 'MANUTENÇÃO BT'),
+(24, 'AFERIÇÃO'),
+(25, 'BTI'),
+(32, 'ANEXO IV'),
+(31, 'LIDE'),
+(33, 'VISTORIADOR'),
+(51, 'EMERGÊNCIA');
+INSERT INTO horario (id_composicao_horario, composicao_horario) VALUES (1, 'MATINAL'), (2, 'NOTURNO');
+INSERT INTO funcionario_funcao (id_funcionario_funcao, funcionario_funcao) VALUES (1, 'ELETRICISTA'), (2, 'SUPERVISOR'), (3, 'ADMINISTRATIVO');
+INSERT INTO funcionario_situacao (id_funcionario_situacao, funcionario_situacao) VALUES (1, 'ATIVO'), (2, 'DESLIGADO'), (3, 'FERIAS'), (4, 'AFASTADO');
+INSERT INTO regional (id_regional, regional) VALUES (1, 'BAIXADA'), (2, 'OESTE'), (3, 'LESTE'), (4, 'CENTRO-SUL');
+INSERT INTO viatura_tipo (id_viatura_tipo, viatura_tipo) VALUES (1, 'LEVE'), (2, 'PESADO');
+INSERT INTO faseado (id_faseado, faseado) VALUES (1, 'Monofásico'), (2, 'Bifásico'), (3, 'Trifásico');
+INSERT INTO servico_situacao (id_servico_situacao, servico_situacao) VALUES (0, 'cancelado'), (1, 'pendente'), (2, 'em rota'), (3, 'iniciado'), (4, 'concluído'), (5, 'não concluído');
+INSERT INTO servico_localidade (id_servico_localidade, servico_localidade) VALUES
+(1, 625, '(BX/CX) - 625 - NILOPOLIS'),
+(1, 630, '(BX/CX) - 630 - DUQUE DE CAXIAS'),
+(1, 632, '(BX/CX) - 632 - CAPIVARI'),
+(1, 635, '(BX/CX) - 635 - SAO JOAO MERITI'),
+(1, 636, '(BX/CX) - 636 - COELHO DA ROCHA'),
+(1, 637, '(BX/CX) - 637 - VILAR DOS TELES'),
+(1, 610, '(BX/NI) - 610 - NOVA IGUACU'),
+(1, 611, '(BX/NI) - 611 - MESQUITA'),
+(1, 612, '(BX/NI) - 612 - ESPLANADA'),
+(1, 613, '(BX/NI) - 613 - AUSTIN'),
+(1, 614, '(BX/NI) - 614 - RANCHO NOVO'),
+(1, 615, '(BX/NI) - 615 - VILA DE CAVA'),
+(1, 616, '(BX/NI) - 616 - TINGUA'),
+(1, 617, '(BX/NI) - 617 - NOVA AURORA'),
+(1, 620, '(BX/NI) - 620 - BELFORD ROXO'),
+(1, 622, '(BX/NI) - 622 - QUEIMADOS'),
+(1, 623, '(BX/NI) - 623 - CABUCU'),
+(1, 624, '(BX/NI) - 624 - MATO GROSSO'),
+(1, 643, '(BX/NI) - 643 - ENG PEDREIRA'),
+(1, 644, '(BX/NI) - 644 - JAPERI'),
+(1, 645, '(BX/NI) - 645 - PARACAMBI'),
+(1, 646, '(BX/NI) - 646 - PAES LEME'),
+(2, 539, '(OE/JP) - 539 - JACAREPAGUA'),
+(2, 580, '(OE/JP) - 580 - REALENGO'),
+(2, 585, '(OE/JP) - 585 - BANGU'),
+(2, 590, '(OE/CG) - 590 - CAMPO GRANDE'),
+(2, 593, '(OE/CG) - 593 - SANTA CRUZ'),
+(2, 595, '(OE/CG) - 595 - ITAGUAI'),
+(2, 596, '(OE/CG) - 596 - SEROPEDICA'),
+(2, 597, '(OE/CG) - 597 - SERRA DO MATOSO'),
+(2, 598, '(OE/CG) - 598 - MATOSO'),
+(3, 535, '(LE/ME) - 535 - MEIER'),
+(3, 538, '(LE/ME) - 538 - PILARES'),
+(3, 540, '(LE/PE) - 540 - MADUREIRA'),
+(3, 544, '(LE/PE) - 544 - GUADALUPE'),
+(3, 545, '(LE/PE) - 545 - IRAJA'),
+(3, 550, '(LE/PE) - 550 - OLARIA'),
+(3, 551, '(LE/ME) - 551 - MARE'),
+(3, 552, '(LE/ME) - 552 - RAMOS'),
+(3, 555, '(LE/PE) - 555 - PENHA'),
+(3, 565, '(LE/ME) - 565 - ILHA GOVERNADOR'),
+(3, 566, '(LE/ME) - 566 - PAQUETA'),
+(4, 500, '(CS/CE) - 500 - COPACABANA'),
+(4, 502, '(CS/BA) - 502 - SAO CONRADO'),
+(4, 505, '(CS/CE) - 505 - BOTAFOGO'),
+(4, 510, '(CS/CE) - 510 - CENTRO'),
+(4, 516, '(CS/CE) - 516 - URCA'),
+(4, 520, '(CS/CE) - 520 - TIJUCA'),
+(4, 525, '(CS/BA) - 525 - BARRA DA TIJUCA'),
+(4, 570, '(CS/CE) - 570 - SAO CRISTOVAO'),
+(5, 700, '(VP/TR) - 700 - VASSOURAS'),
+(5, 710, '(VP/TR) - 710 - PATY DO ALFERES'),
+(5, 740, '(VP/TR) - 740 - MIGUEL PEREIRA'),
+(5, 747, '(VP/VR) - 747 - PIRAI'),
+(5, 762, '(VP/TR) - 762 - ENG PAULO FRONTIN'),
+(5, 776, '(VP/VR) - 776 - VOLTA REDONDA'),
+(5, 793, '(VP/TR) - 793 - PARAIBA DO SUL');
